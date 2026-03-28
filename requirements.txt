@@ -4,3 +4,5 @@ streamlit
 Pillow
 plotly
 pandas
+streamlit-webrtc
+av

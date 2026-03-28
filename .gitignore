@@ -1,35 +1,7 @@
-# Python
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
-.Python
-*.egg
-*.egg-info/
-dist/
-build/
-*.so
-
-# Virtual environments
 venv/
-env/
-.venv/
 .env/
-
-# Streamlit
 .streamlit/secrets.toml
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
 .DS_Store
-Thumbs.db
-
-# Logs / temp
 *.log
-*.tmp
-session_data/
