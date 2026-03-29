@@ -1,6 +1,6 @@
-# 🧠 Smart Focus & Distraction Analyzer
+# Smart Focus & Distraction Analyzer
 
-> An IoT + ML project that uses your webcam to detect whether you're **focused**, **distracted**, or **drowsy** — with a live dashboard, session history chart, and focus score.
+An IoT + ML project that uses your webcam to detect whether you're focused, distracted, or drowsy, with a live dashboard, session history chart, and focus score.
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://streamlit.io/cloud)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
@@ -9,144 +9,165 @@
 
 ---
 
-## 📸 Features
+## Features
 
 | Feature | Description |
 |---|---|
-| 🎯 Face Detection | Detects if you're looking at the screen |
-| 👁️ Eye Detection | Identifies drowsiness from closed eyes |
-| 📊 Focus Score | Live % score updated each capture |
-| 📈 Session Chart | Plotly graph of your focus over time |
-| 🎤 Noise Indicator | Environment noise level (manual slider) |
-| ☁️ Cloud Ready | Deploys to Streamlit Cloud for free |
+| Live webcam streaming | Uses `streamlit-webrtc` for a continuous browser camera feed |
+| Face detection | Detects whether your face is present and centered |
+| Eye detection | Flags possible drowsiness when eyes stay closed |
+| Focus score | Tracks the percentage of focused frames in real time |
+| Session history | Shows a rolling chart of focus states and score |
+| Noise indicator | Lets you simulate environment noise from the sidebar |
 
 ---
 
-## 🚀 Quick Start (Run Locally)
+## Quick Start
 
-### Step 1 — Clone the repository
+### 1. Clone the repository
+
 ```bash
-git clone https://github.com/YOUR_USERNAME/smart-focus-analyzer.git
+git clone https://github.com/ishanvaibhav/smart-focus-analyzer.git
 cd smart-focus-analyzer
 ```
 
-### Step 2 — Create a virtual environment (recommended)
+### 2. Create and activate a virtual environment
+
 ```bash
 python -m venv venv
+```
 
-# On Windows:
+Windows:
+
+```bash
 venv\Scripts\activate
+```
 
-# On Mac/Linux:
+macOS / Linux:
+
+```bash
 source venv/bin/activate
 ```
 
-### Step 3 — Install dependencies
+### 3. Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### Step 4 — Run the app
+### 4. Run the app
+
 ```bash
 streamlit run app.py
 ```
 
-Your browser will open at `http://localhost:8501` automatically.
+If port `8501` is already in use, run:
+
+```bash
+streamlit run app.py --server.port 8503
+```
+
+Then open the local URL shown in the terminal.
+
+### 5. Start the live stream
+
+1. Open the app in your browser.
+2. Click `Start` in the `Live Camera Stream` section.
+3. Allow camera access when your browser prompts you.
+4. Watch the dashboard update automatically while the stream stays live.
 
 ---
 
-## 📂 Project Structure
+## Troubleshooting
 
-```
+- If the stream does not start, make sure you clicked `Start` and allowed camera access in the browser.
+- If you see a missing dependency message, run `pip install -r requirements.txt` again in the same Python environment you use to launch Streamlit.
+- If `8501` is busy, launch with `--server.port 8503` or another open port.
+- If you are not on `localhost`, use a browser and host setup that allows webcam access.
+
+---
+
+## Project Structure
+
+```text
 smart-focus-analyzer/
-│
-├── app.py               ← Main Streamlit app (UI + logic)
-├── detector.py          ← Face + eye detection (OpenCV)
-├── requirements.txt     ← All Python dependencies
-├── .gitignore           ← Files Git should ignore
-├── .streamlit/
-│   └── config.toml      ← Dark theme + server settings
-└── README.md            ← This file
+|
+|-- app.py                Main Streamlit app (UI + live stream + dashboard)
+|-- detector.py           Face + eye detection logic using OpenCV
+|-- requirements.txt      Python dependencies
+|-- .gitignore            Git ignore rules
+|-- .streamlit/
+|   |-- config.toml       Streamlit theme and server settings
+|-- README.md             Project documentation
 ```
 
 ---
 
-## ☁️ Deploy to Streamlit Cloud (Free)
+## How It Works
 
-1. **Push this project to GitHub** (see section below)
-2. Go to [share.streamlit.io](https://share.streamlit.io)
-3. Click **"New app"**
-4. Fill in:
-   - **Repository:** `YOUR_USERNAME/smart-focus-analyzer`
-   - **Branch:** `main`
-   - **Main file path:** `app.py`
-5. Click **Deploy** — done! You get a free public URL.
-
-> ⚠️ Note: Streamlit Cloud supports `st.camera_input()` in modern browsers.
-> Make sure to **allow camera access** when the browser prompts you.
-
----
-
-## 🛠️ Tech Stack
-
-- **Python 3.9+**
-- **OpenCV** — face and eye detection via Haar Cascades
-- **Streamlit** — web UI framework
-- **Plotly** — interactive charts
-- **Pandas** — session data handling
-- **Pillow** — image processing
-
----
-
-## 🧠 How It Works
-
-```
-Webcam Image
-     │
-     ▼
+```text
+Browser Webcam
+     |
+     v
+streamlit-webrtc live stream
+     |
+     v
 FaceAttentionDetector (detector.py)
-     │
-     ├── No face detected?        → DISTRACTED
-     ├── Face off-centre?         → DISTRACTED  
-     ├── Eyes closed too long?    → DROWSY
-     └── All checks pass?         → FOCUSED
-     │
-     ▼
-Focus Score = (Focused Frames / Total Frames) × 100
-     │
-     ▼
-Streamlit Dashboard (app.py)
-  • Status badge (green / red / orange)
-  • Gauge chart
-  • Session history line chart
+     |
+     |-- No face detected?      -> DISTRACTED
+     |-- Face off-centre?       -> DISTRACTED
+     |-- Eyes closed too long?  -> DROWSY
+     |-- Otherwise              -> FOCUSED
+     |
+     v
+Focus Score = (Focused Frames / Total Frames) * 100
+     |
+     v
+Streamlit dashboard
+  - Status badge
+  - Focus gauge
+  - Session history chart
 ```
 
 ---
 
-## 📈 Roadmap (Future Upgrades)
+## Deploy to Streamlit Cloud
+
+1. Push the project to GitHub.
+2. Go to [share.streamlit.io](https://share.streamlit.io).
+3. Create a new app.
+4. Select:
+   - Repository: `ishanvaibhav/smart-focus-analyzer`
+   - Branch: `main`
+   - Main file path: `app.py`
+5. Deploy and allow camera access in the browser.
+
+Note: this app uses `streamlit-webrtc`, so live camera access depends on browser permissions and the runtime environment.
+
+---
+
+## Tech Stack
+
+- Python
+- Streamlit
+- streamlit-webrtc
+- OpenCV
+- Plotly
+- Pandas
+
+---
+
+## Roadmap
 
 - [ ] MediaPipe face mesh for higher accuracy
-- [ ] ML model trained on custom data (replaces rule-based logic)
-- [ ] Phone/app usage detection
-- [ ] Pomodoro AI (smart break timer)
-- [ ] Email/Slack daily focus report
-- [ ] AWS IoT Core integration for cloud logging
+- [ ] ML model trained on custom data
+- [ ] Phone or app usage detection
+- [ ] Pomodoro timer integration
+- [ ] Daily focus reports
+- [ ] Cloud logging
 
 ---
 
-## 💼 Interview Description
+## License
 
-> *"Built an IoT + ML-based attention monitoring system using computer vision and behavioural analytics to generate real-time focus insights and adaptive productivity recommendations — deployed as a full-stack web app on Streamlit Cloud."*
-
----
-
-## 📄 License
-
-MIT License — free to use, modify, and distribute.
-
----
-
-## 🙋 Author
-
-**Your Name**  
-[GitHub](https://github.com/YOUR_USERNAME) • [LinkedIn](https://linkedin.com/in/YOUR_USERNAME)
+MIT License
