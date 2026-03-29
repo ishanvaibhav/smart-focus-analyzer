@@ -84,6 +84,7 @@ Then open the local URL shown in the terminal.
 - If you see a missing dependency message, run `pip install -r requirements.txt` again in the same Python environment you use to launch Streamlit.
 - If `8501` is busy, launch with `--server.port 8503` or another open port.
 - If you are not on `localhost`, use a browser and host setup that allows webcam access.
+- For remote deployment, add TURN credentials in Streamlit secrets with `turn_server_url`, `turn_username`, and `turn_password` for a more reliable WebRTC connection.
 
 ---
 
@@ -143,6 +144,7 @@ Streamlit dashboard
 5. Deploy and allow camera access in the browser.
 
 Note: this app uses `streamlit-webrtc`, so live camera access depends on browser permissions and the runtime environment.
+Optional: add TURN credentials in Streamlit secrets using `turn_server_url`, `turn_username`, and `turn_password` if the remote stream does not connect reliably.
 
 ---
 

@@ -241,6 +241,28 @@ def focus_score(snapshot):
     return round(snapshot["focused_count"] / total_frames * 100, 1)
 
 
+def build_rtc_configuration():
+    ice_servers = [{"urls": ["stun:stun.l.google.com:19302"]}]
+
+    secret_ice_servers = st.secrets.get("ice_servers")
+    if secret_ice_servers:
+        ice_servers = list(secret_ice_servers)
+    else:
+        turn_url = st.secrets.get("turn_server_url")
+        turn_username = st.secrets.get("turn_username")
+        turn_password = st.secrets.get("turn_password")
+        if turn_url and turn_username and turn_password:
+            ice_servers.append(
+                {
+                    "urls": [turn_url],
+                    "username": turn_username,
+                    "credential": turn_password,
+                }
+            )
+
+    return RTCConfiguration({"iceServers": ice_servers})
+
+
 def build_gauge(score):
     gauge_color = "#39ff14" if score >= 70 else "#ffaa00" if score >= 40 else "#ff4444"
 
@@ -327,6 +349,55 @@ def build_history_chart(history):
     return figure
 
 
+def render_live_sections(
+    snapshot,
+    noise_level,
+    session_metric,
+    frames_metric,
+    focus_metric_placeholder,
+    status_placeholder,
+    reason_placeholder,
+    tip_placeholder,
+    gauge_placeholder,
+    chart_placeholder,
+):
+    status, reason, label, tip = display_state(snapshot, noise_level)
+    score = focus_score(snapshot)
+
+    elapsed = 0
+    if snapshot["total_frames"] > 0 or status != "waiting":
+        elapsed = int(time.time() - snapshot["session_start"])
+    minutes, seconds = divmod(elapsed, 60)
+
+    session_metric.metric("Session", f"{minutes:02d}:{seconds:02d}")
+    frames_metric.metric("Frames", snapshot["total_frames"])
+    focus_metric_placeholder.metric("Focus Score", f"{score:.1f}%")
+
+    status_placeholder.markdown(
+        f'<div class="status-{status}">{label}</div>',
+        unsafe_allow_html=True,
+    )
+    reason_placeholder.markdown(
+        f"<small style='color:#aaa'>{reason}</small>",
+        unsafe_allow_html=True,
+    )
+    tip_placeholder.markdown(
+        f'<div class="tip-box">{tip}</div>',
+        unsafe_allow_html=True,
+    )
+    gauge_placeholder.plotly_chart(build_gauge(score), use_container_width=True)
+
+    if len(snapshot["history"]) >= 2:
+        chart_placeholder.plotly_chart(
+            build_history_chart(snapshot["history"]),
+            use_container_width=True,
+        )
+    else:
+        chart_placeholder.info(
+            "Start the camera stream to build the live focus history chart."
+        )
+
+
 with st.sidebar:
     st.image("https://img.icons8.com/fluency/96/brain.png", width=70)
     st.title("Focus Analyzer")
@@ -380,13 +451,15 @@ col_video, col_dash = st.columns([1.3, 1], gap="large")
 with col_video:
     st.subheader("Live Camera Stream")
     st.caption("Allow camera access when your browser asks.")
+    st.caption(
+        "If you deploy this app remotely, add TURN credentials in Streamlit secrets "
+        "for the most reliable connection."
+    )
 
     context = webrtc_streamer(
         key="focus-stream",
         video_processor_factory=FocusVideoProcessor,
-        rtc_configuration=RTCConfiguration(
-            {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
-        ),
+        rtc_configuration=build_rtc_configuration(),
         media_stream_constraints={"video": True, "audio": False},
         async_processing=True,
     )
@@ -412,45 +485,30 @@ if reset_clicked:
     else:
         reset_message.info("Start the camera stream first.")
 
+render_live_sections(
+    get_snapshot(context),
+    noise_level,
+    session_metric,
+    frames_metric,
+    focus_metric_placeholder,
+    status_placeholder,
+    reason_placeholder,
+    tip_placeholder,
+    gauge_placeholder,
+    chart_placeholder,
+)
 
-@st.fragment(run_every=refresh_rate)
-def render_live_sections():
-    snapshot = get_snapshot(context)
-    status, reason, label, tip = display_state(snapshot, noise_level)
-    score = focus_score(snapshot)
-
-    elapsed = 0
-    if snapshot["total_frames"] > 0 or status != "waiting":
-        elapsed = int(time.time() - snapshot["session_start"])
-    minutes, seconds = divmod(elapsed, 60)
-
-    session_metric.metric("Session", f"{minutes:02d}:{seconds:02d}")
-    frames_metric.metric("Frames", snapshot["total_frames"])
-    focus_metric_placeholder.metric("Focus Score", f"{score:.1f}%")
-
-    status_placeholder.markdown(
-        f'<div class="status-{status}">{label}</div>',
-        unsafe_allow_html=True,
+while context.state.playing:
+    render_live_sections(
+        get_snapshot(context),
+        noise_level,
+        session_metric,
+        frames_metric,
+        focus_metric_placeholder,
+        status_placeholder,
+        reason_placeholder,
+        tip_placeholder,
+        gauge_placeholder,
+        chart_placeholder,
     )
-    reason_placeholder.markdown(
-        f"<small style='color:#aaa'>{reason}</small>",
-        unsafe_allow_html=True,
-    )
-    tip_placeholder.markdown(
-        f'<div class="tip-box">{tip}</div>',
-        unsafe_allow_html=True,
-    )
-    gauge_placeholder.plotly_chart(build_gauge(score), use_container_width=True)
-
-    if len(snapshot["history"]) >= 2:
-        chart_placeholder.plotly_chart(
-            build_history_chart(snapshot["history"]),
-            use_container_width=True,
-        )
-    else:
-        chart_placeholder.info(
-            "Start the camera stream to build the live focus history chart."
-        )
-
-
-render_live_sections()
+    time.sleep(refresh_rate)
