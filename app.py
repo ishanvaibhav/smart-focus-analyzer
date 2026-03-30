@@ -12,6 +12,7 @@ import cv2
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from streamlit.errors import StreamlitSecretNotFoundError
 
 from detector import FaceAttentionDetector
 
@@ -244,21 +245,24 @@ def focus_score(snapshot):
 def build_rtc_configuration():
     ice_servers = [{"urls": ["stun:stun.l.google.com:19302"]}]
 
-    secret_ice_servers = st.secrets.get("ice_servers")
-    if secret_ice_servers:
-        ice_servers = list(secret_ice_servers)
-    else:
-        turn_url = st.secrets.get("turn_server_url")
-        turn_username = st.secrets.get("turn_username")
-        turn_password = st.secrets.get("turn_password")
-        if turn_url and turn_username and turn_password:
-            ice_servers.append(
-                {
-                    "urls": [turn_url],
-                    "username": turn_username,
-                    "credential": turn_password,
-                }
-            )
+    try:
+        secret_ice_servers = st.secrets.get("ice_servers")
+        if secret_ice_servers:
+            ice_servers = list(secret_ice_servers)
+        else:
+            turn_url = st.secrets.get("turn_server_url")
+            turn_username = st.secrets.get("turn_username")
+            turn_password = st.secrets.get("turn_password")
+            if turn_url and turn_username and turn_password:
+                ice_servers.append(
+                    {
+                        "urls": [turn_url],
+                        "username": turn_username,
+                        "credential": turn_password,
+                    }
+                )
+    except StreamlitSecretNotFoundError:
+        pass
 
     return RTCConfiguration({"iceServers": ice_servers})
 
